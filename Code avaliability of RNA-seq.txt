@@ -4,61 +4,61 @@ Related to “Bacterial stress granule protects mRNA through ribonucleases exclu
 
 RNA-seq
 1.The clean data was mapped to the MG1655 k12 genome using the BWA aligner software (version 0.7.17-r1188, https://github.com/lh3/bwa.git). Then we converted the sam files to bam files using samtool (Version 1.9, https://samtools.sourceforge.net/). The bam files were counted with featureCounts (Version 2.0.1, https://github.com/topics/featurecounts) to generate expression results. (XX means sample name such as “AR-1”,“AR-2” et.al.
-bwa mem Escherichia_coli_str_k_12_substr_mg1655.ASM584v2.dna.toplevel.fa XX_R1.fq.gz  XX_R2.fq.gz > XX.sam
-samtools_0.1.18 view -Sb XX.sam > XX.bam
-featureCounts -T 6 -t exon -g gene_id -a Escherichia_coli_str_k_12_substr_mg1655.ASM584v2.46.gtf -o XX.txt  XX.bam
+>bwa mem Escherichia_coli_str_k_12_substr_mg1655.ASM584v2.dna.toplevel.fa XX_R1.fq.gz  XX_R2.fq.gz > XX.sam
+>samtools_0.1.18 view -Sb XX.sam > XX.bam
+>featureCounts -T 6 -t exon -g gene_id -a Escherichia_coli_str_k_12_substr_mg1655.ASM584v2.46.gtf -o XX.txt  XX.bam
 
 2.Differential expression analysis was performed using DESeq2. The “control_sample” means RNA-seq data from cytosol such as “CR-1”,“CR-2” et.al. The “treat_sample” means RNA-seq data from aggresome such as “AR-1”,“AR-2” et.al. 
-library(limma)
-library(DESeq2)
-library("RColorBrewer")
-library(ggplot2)
-library(pheatmap)
-library(dplyr)
-library(ggrepel)
-control_sample1<-read.table("E:/control_sample1.txt")
-control_sample2<-read.table("E:/control_sample2.txt")
-treat_sample1<-read.table("E:/treat_sample1.txt")
-treat_sample2<-read.table("E:/treat_sample2.txt")
-sample=data.frame(control_sample1=control_sample1[,7],control_sample2=control_sample2[,7],treat_sample1=treat_sample1[,7],treat_sample2=treat_sample2[,7])
-rownames(sample)=control_sample1[,1]
-sample2 <- sample[rowSums(sample)>2,]
-conditions<-c("Ctrl","Ctrl","Exp","Exp")
-batch<-factor(c(1,1,1,1))
-sample<-data.frame(conditions,batch)
-rownames(sample)<-colnames(sample2)
-ddsFullCountTable <- DESeqDataSetFromMatrix(countData =sample2,colData = sample,  design= ~ conditions)
-dds <- DESeq(ddsFullCountTable)
-normalized_counts <- counts(dds, normalized=TRUE)
-hmcol <- colorRampPalette(brewer.pal(9, "GnBu"))(100)
-pearson_cor <- as.matrix(cor(normalized_counts, method="pearson"))
-hwz<- hcluster(t(normalized_counts), method="pearson")
-heatmap.2(pearson_cor, Rowv=as.dendrogram(hwz), symm=T, trace="none",col=hmcol, margins=c(11,11), main="Pearson correlation")
-sampleA = "Exp"
-sampleB = "Ctrl"
-contrastV <- c("conditions", sampleA, sampleB)
-res <- results(dds,contrast=contrastV)
-res<- cbind(ID=row.names(sample2),sample2,normalized_counts,as.data.frame(res))
-write.table(res,"E:/sample.all.xls",sep="\t", quote=F, row.names=T,col.names = T)
+>library(limma)
+>library(DESeq2)
+>library("RColorBrewer")
+>library(ggplot2)
+>library(pheatmap)
+>library(dplyr)
+>library(ggrepel)
+>control_sample1<-read.table("E:/control_sample1.txt")
+>control_sample2<-read.table("E:/control_sample2.txt")
+>treat_sample1<-read.table("E:/treat_sample1.txt")
+>treat_sample2<-read.table("E:/treat_sample2.txt")
+>sample=data.frame(control_sample1=control_sample1[,7],control_sample2=control_sample2[,7],treat_sample1=treat_sample1[,7],treat_sample2=treat_sample2[,7])
+>rownames(sample)=control_sample1[,1]
+>sample2 <- sample[rowSums(sample)>2,]
+>conditions<-c("Ctrl","Ctrl","Exp","Exp")
+>batch<-factor(c(1,1,1,1))
+>sample<-data.frame(conditions,batch)
+>rownames(sample)<-colnames(sample2)
+>ddsFullCountTable <- DESeqDataSetFromMatrix(countData =sample2,colData = sample,  design= ~ conditions)
+>dds <- DESeq(ddsFullCountTable)
+>normalized_counts <- counts(dds, normalized=TRUE)
+>hmcol <- colorRampPalette(brewer.pal(9, "GnBu"))(100)
+>pearson_cor <- as.matrix(cor(normalized_counts, method="pearson"))
+>hwz<- hcluster(t(normalized_counts), method="pearson")
+>heatmap.2(pearson_cor, Rowv=as.dendrogram(hwz), symm=T, trace="none",col=hmcol, margins=c(11,11), main="Pearson correlation")
+>sampleA = "Exp"
+>sampleB = "Ctrl"
+>contrastV <- c("conditions", sampleA, sampleB)
+>res <- results(dds,contrast=contrastV)
+>res<- cbind(ID=row.names(sample2),sample2,normalized_counts,as.data.frame(res))
+>write.table(res,"E:/sample.all.xls",sep="\t", quote=F, row.names=T,col.names = T)
 
 3.For Gene Ontology (GO) analysis and Kyoto Encyclopedia of Genes and Genomes (KEGG) pathway analysis, gene id was converted using the DAVID web resource (http://david.abcc.ncifcrf.gov/). R package clusterProfiler was used to identify the pathways in which these candidates are expressed.
-library("clusterProfiler")
-library(org.EcK12.eg.db)
-library(R.utils)
-R.utils::setOption("clusterProfiler.download.method",'auto')
-Data1<-read.table("sample-KEGG.txt")
-Data1.1<-Data1[,1]
-kegg <- enrichKEGG(
+>library("clusterProfiler")
+>library(org.EcK12.eg.db)
+>library(R.utils)
+>R.utils::setOption("clusterProfiler.download.method",'auto')
+>Data1<-read.table("sample-KEGG.txt")
+>Data1.1<-Data1[,1]
+>kegg <- enrichKEGG(
 gene = Data1.1, 
 organism = 'eco', 
 pAdjustMethod = 'fdr', 
 pvalueCutoff = 0.05, 
 qvalueCutoff = 0.05, )
-barplot(kegg)
+>barplot(kegg)
 
-Data2<-read.table("/sample-GO.txt")
-Data2.1<-Data2[,1]
-ego <- enrichGO(
+>Data2<-read.table("/sample-GO.txt")
+>Data2.1<-Data2[,1]
+>ego <- enrichGO(
 gene          = Data2.1,
 keyType = "ENTREZID",
 OrgDb         = org.EcK12.eg.db,
@@ -67,5 +67,4 @@ pAdjustMethod = "BH",
 pvalueCutoff  = 0.05,
 qvalueCutoff  = 0.05,
 readable      = TRUE)
-barplot(ego)
-
+>barplot(ego)
